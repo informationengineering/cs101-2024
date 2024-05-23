@@ -1,5 +1,8 @@
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <sstream>
+
 using namespace std;
 
 class myString {
@@ -13,49 +16,38 @@ class myString {
 
 class ReadClass {
     private:
-        string classNames;
-        int classCount;
+        int m_classCount = 0;
+        string classNames[2^5];
     public:
-        ReadClass() : classCount(0) {}
+        ReadClass() {}
+        void showClass() {
+            ifstream in;
+            string line;
+            in.open("main.cpp");
 
-        void readFile(const string& filename) {
-            FILE *file = fopen(filename.c_str(), "r");
-            if (!file) {
-                cerr << "Error: Could not open file " << filename << endl;
-                return;
-            }
-
-            char line[256];
-            while (fgets(line, sizeof(line), file)) {
-                string strLine(line);
-                size_t pos = strLine.find("class ");
-                if (pos != string::npos) {
-                    if ((pos == 0 || !isalnum(strLine[pos - 1])) &&
-                        (pos + 5 < strLine.size() && !isalnum(strLine[pos + 5]))) {
-                        size_t start = pos + 6; 
-                        size_t end = strLine.find_first_of(" \n{", start);
-                        if (end != string::npos) {
-                            string className = strLine.substr(start, end - start);
-                            if (!className.empty() && isalpha(className[0])) {
-                                classNames += "class " + className + "\n";
-                                classCount++;
-                            }
-                        }
-                    }
+            while (getline(in, line)) {
+                if (line.find("class") == 0){
+                    classNames[m_classCount++] = line;
                 }
             }
-            fclose(file);
-        }
-
-         void showClass() {
-            cout << classCount << " class" << " in main.cpp\n";
-            cout << classNames;
+            in.close();
+            
+            if (m_classCount) {
+                cout << m_classCount << " class" << " in main.cpp" << endl;
+                for (int i=0; i<m_classCount; i++) {
+                    stringstream str(classNames[i]);
+                    for (int j=0; j<m_classCount; j++) {
+                        getline(str, line, ' ');
+                        cout << line << " ";
+                    }
+                    cout << endl;
+                }
+            }
         }
 };
 
 int main() {
     ReadClass rfile;
-    rfile.readFile("main.cpp");
     rfile.showClass();
     return 0;
 }
